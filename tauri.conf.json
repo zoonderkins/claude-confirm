@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "claude-confirm",
+  "version": "0.1.0",
+  "identifier": "com.claude.confirm",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "dist"
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ]
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Claude Confirm",
+        "width": 900,
+        "height": 720,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "alwaysOnTop": true,
+        "decorations": true,
+        "visible": true,
+        "devtools": true
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self' customprotocol: asset: https://asset.localhost https://tauri.localhost",
+        "connect-src": "ipc: http://ipc.localhost",
+        "font-src": "'self' data:",
+        "img-src": "'self' asset: http://asset.localhost https://asset.localhost blob: data:",
+        "style-src": "'unsafe-inline' 'self'"
+      },
+      "capabilities": [
+        {
+          "identifier": "main-capability",
+          "description": "Main window capabilities",
+          "windows": ["main"],
+          "permissions": [
+            "core:default"
+          ]
+        }
+      ]
+    },
+    "withGlobalTauri": true
+  }
+}

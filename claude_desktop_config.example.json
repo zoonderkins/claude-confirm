@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "claude-confirm": {
+      "command": "/Users/edward_oo/temp/claude-confirm/target/release/claude-confirm"
+    }
+  }
+}
