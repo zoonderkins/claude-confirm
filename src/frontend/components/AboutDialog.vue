@@ -66,7 +66,7 @@ const emit = defineEmits(['update:visible'])
 const isVisible = ref(props.visible)
 const loading = ref(false)
 const versionInfo = ref({
-  current: '0.1.0',
+  current: '...',
   latest: null,
   has_update: false,
   error: null
