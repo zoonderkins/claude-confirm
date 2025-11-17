@@ -23,6 +23,9 @@
       <div class="dialog-header">
         <h2>Claude Confirm</h2>
         <div class="header-actions">
+          <button @click="showAbout = true" class="icon-btn" title="關於">
+            ℹ️
+          </button>
           <button @click="openDevTools" class="icon-btn" title="開發者工具 (F12)">
             🔧
           </button>
@@ -80,6 +83,9 @@
         </button>
       </div>
     </div>
+
+    <!-- About 對話框 -->
+    <AboutDialog v-model:visible="showAbout" :class="{ dark: isDark }" />
   </div>
 </template>
 
@@ -90,6 +96,7 @@ import { invoke } from '@tauri-apps/api/core'
 import MarkdownViewer from './components/MarkdownViewer.vue'
 import SectionList from './components/SectionList.vue'
 import UserInput from './components/UserInput.vue'
+import AboutDialog from './components/AboutDialog.vue'
 
 const request = ref(null)
 const selectedSections = ref([])
@@ -99,6 +106,7 @@ const debugInfo = ref('')
 const showSettings = ref(false)
 const isDark = ref(false)
 const isPinned = ref(true)
+const showAbout = ref(false)
 
 // 載入儲存的設定
 function loadSettings() {

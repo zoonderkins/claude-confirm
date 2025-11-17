@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0",
   "productName": "claude-confirm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.claude.confirm",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -34,7 +34,7 @@
     "security": {
       "csp": {
         "default-src": "'self' customprotocol: asset: https://asset.localhost https://tauri.localhost",
-        "connect-src": "ipc: http://ipc.localhost",
+        "connect-src": "ipc: http://ipc.localhost https://api.github.com",
         "font-src": "'self' data:",
         "img-src": "'self' asset: http://asset.localhost https://asset.localhost blob: data:",
         "style-src": "'unsafe-inline' 'self'"
@@ -45,7 +45,8 @@
           "description": "Main window capabilities",
           "windows": ["main"],
           "permissions": [
-            "core:default"
+            "core:default",
+            "shell:allow-open"
           ]
         }
       ]

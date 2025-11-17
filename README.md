@@ -141,6 +141,70 @@ pnpm tauri:dev
 # 方法 2: 按 F12 鍵
 ```
 
+### Production Build
+
+```bash
+# 完整 production build（推薦）
+pnpm tauri:build
+
+# 產出位置：
+# - macOS App: target/release/bundle/macos/claude-confirm.app
+# - DMG: target/release/bundle/dmg/claude-confirm_0.2.0_aarch64.dmg
+# - Binary: target/release/claude-confirm-ui
+```
+
+### Debug 模式
+
+```bash
+# 僅編譯 debug 版本（不啟動 UI）
+cargo build --bin claude-confirm-ui
+
+# 執行 debug 版本
+./target/debug/claude-confirm-ui
+
+# 或僅編譯 MCP server
+cargo build --bin claude-confirm
+./target/debug/claude-confirm
+```
+
+### 常用 Debug 技巧
+
+**查看 Rust 日誌**：
+```bash
+RUST_LOG=debug ./target/debug/claude-confirm-ui
+```
+
+**測試 UI（使用測試 JSON）**：
+```bash
+# 建立測試請求檔案
+cat > /tmp/test_request.json <<'EOF'
+{
+  "id": "test-123",
+  "message": "# 測試\n\n這是測試訊息",
+  "sections": [
+    {
+      "title": "段落 1",
+      "content": "內容 1",
+      "selected": true
+    }
+  ],
+  "is_markdown": true
+}
+EOF
+
+# 使用測試檔案啟動 UI
+./target/debug/claude-confirm-ui --mcp-request /tmp/test_request.json
+```
+
+**檢查編譯產物**：
+```bash
+# 列出所有編譯產物
+ls -lh target/release/claude-confirm*
+
+# 查看 bundle 內容
+ls -lhR target/release/bundle/
+```
+
 ### 項目結構
 
 ```

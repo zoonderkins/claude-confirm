@@ -15,6 +15,8 @@ pub fn run_ui_app() {
             commands::read_mcp_request,
             commands::set_always_on_top,
             commands::open_devtools,
+            commands::check_latest_version,
+            commands::open_github_repo,
         ])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();

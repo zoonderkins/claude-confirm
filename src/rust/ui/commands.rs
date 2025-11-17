@@ -1,6 +1,20 @@
 use tauri::{command, AppHandle, Manager};
 use crate::types::UserResponse;
 use std::path::Path;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VersionInfo {
+    pub current: String,
+    pub latest: Option<String>,
+    pub has_update: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubRelease {
+    tag_name: String,
+}
 
 #[command]
 pub async fn submit_response(response: UserResponse) -> Result<(), String> {
@@ -117,5 +131,107 @@ pub async fn open_devtools(app_handle: AppHandle) -> Result<(), String> {
         .ok_or("找不到主窗口")?;
 
     window.open_devtools();
+    Ok(())
+}
+
+#[command]
+pub async fn check_latest_version() -> Result<VersionInfo, String> {
+    let current_version = env!("CARGO_PKG_VERSION").to_string();
+
+    // 建立 HTTP 客戶端
+    let client = reqwest::Client::builder()
+        .user_agent("claude-confirm/0.1.0")
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| format!("建立 HTTP 客戶端失敗: {}", e))?;
+
+    // 獲取最新版本資訊
+    match client
+        .get("https://api.github.com/repos/zoonderkins/claude-confirm/releases/latest")
+        .send()
+        .await
+    {
+        Ok(response) => {
+            let status = response.status();
+
+            // 檢查 404 - 代表還沒有 release
+            if status == reqwest::StatusCode::NOT_FOUND {
+                return Ok(VersionInfo {
+                    current: current_version,
+                    latest: None,
+                    has_update: false,
+                    error: Some("GitHub 尚未發布任何 release 版本".to_string()),
+                });
+            }
+
+            // 檢查其他錯誤狀態
+            if !status.is_success() {
+                return Ok(VersionInfo {
+                    current: current_version,
+                    latest: None,
+                    has_update: false,
+                    error: Some(format!("GitHub API 返回錯誤: {}", status)),
+                });
+            }
+
+            match response.json::<GitHubRelease>().await {
+                Ok(release) => {
+                    let latest = release.tag_name.trim_start_matches('v').to_string();
+                    let current = current_version.trim_start_matches('v');
+                    let has_update = latest != current;
+
+                    Ok(VersionInfo {
+                        current: current_version,
+                        latest: Some(latest),
+                        has_update,
+                        error: None,
+                    })
+                }
+                Err(e) => Ok(VersionInfo {
+                    current: current_version,
+                    latest: None,
+                    has_update: false,
+                    error: Some(format!("解析 JSON 失敗: {}", e)),
+                })
+            }
+        }
+        Err(e) => Ok(VersionInfo {
+            current: current_version,
+            latest: None,
+            has_update: false,
+            error: Some(format!("無法連接到 GitHub: {}", e)),
+        })
+    }
+}
+
+#[command]
+pub async fn open_github_repo() -> Result<(), String> {
+    let url = "https://github.com/zoonderkins/claude-confirm";
+
+    // 使用系統預設瀏覽器開啟 URL
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(url)
+            .spawn()
+            .map_err(|e| format!("開啟瀏覽器失敗: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(url)
+            .spawn()
+            .map_err(|e| format!("開啟瀏覽器失敗: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(&["/C", "start", url])
+            .spawn()
+            .map_err(|e| format!("開啟瀏覽器失敗: {}", e))?;
+    }
+
     Ok(())
 }
