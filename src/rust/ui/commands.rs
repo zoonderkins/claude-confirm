@@ -11,6 +11,13 @@ pub struct VersionInfo {
     pub error: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileEntry {
+    pub path: String,
+    pub name: String,
+    pub is_directory: bool,
+}
+
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
     tag_name: String,
@@ -69,22 +76,31 @@ pub fn read_mcp_request(file_path: String) -> Result<serde_json::Value, String> 
 }
 
 #[command]
-pub async fn get_project_files() -> Result<Vec<String>, String> {
+pub async fn get_project_files() -> Result<Vec<FileEntry>, String> {
     // 獲取當前工作目錄
     let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
 
-    // 掃描文件
-    let files = scan_directory(&current_dir, 3).map_err(|e| e.to_string())?;
+    // 掃描文件和資料夾
+    let mut entries = scan_directory(&current_dir, 3).map_err(|e| e.to_string())?;
 
-    Ok(files)
+    // 排序：資料夾在前，然後按名稱排序
+    entries.sort_by(|a, b| {
+        match (a.is_directory, b.is_directory) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        }
+    });
+
+    Ok(entries)
 }
 
-fn scan_directory(dir: &Path, max_depth: usize) -> std::io::Result<Vec<String>> {
+fn scan_directory(dir: &Path, max_depth: usize) -> std::io::Result<Vec<FileEntry>> {
     if max_depth == 0 {
         return Ok(Vec::new());
     }
 
-    let mut files = Vec::new();
+    let mut entries = Vec::new();
 
     for entry in std::fs::read_dir(dir)? {
         let entry = entry?;
@@ -102,16 +118,33 @@ fn scan_directory(dir: &Path, max_depth: usize) -> std::io::Result<Vec<String>> 
             }
         }
 
+        let name = path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+
         if path.is_file() {
             if let Some(path_str) = path.to_str() {
-                files.push(path_str.to_string());
+                entries.push(FileEntry {
+                    path: path_str.to_string(),
+                    name,
+                    is_directory: false,
+                });
             }
         } else if path.is_dir() {
-            files.extend(scan_directory(&path, max_depth - 1)?);
+            // 先加入資料夾本身
+            if let Some(path_str) = path.to_str() {
+                entries.push(FileEntry {
+                    path: path_str.to_string(),
+                    name,
+                    is_directory: true,
+                });
+            }
+            // 遞迴掃描子目錄
+            entries.extend(scan_directory(&path, max_depth - 1)?);
         }
     }
 
-    Ok(files)
+    Ok(entries)
 }
 
 #[command]

@@ -83,21 +83,21 @@ watch(() => props.sections, (newSections) => {
   align-items: flex-start;
   padding: 1rem;
   margin: 0.5rem 0;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: white;
+  background: var(--bg-primary, white);
 }
 
 .section-item:hover {
-  border-color: #4CAF50;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-color, #9333EA);
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.15);
 }
 
 .section-item.selected {
-  border-color: #4CAF50;
-  background: #f1f8f4;
+  border-color: var(--accent-color, #9333EA);
+  background: var(--accent-light, rgba(147, 51, 234, 0.1));
 }
 
 .section-checkbox {
@@ -118,13 +118,13 @@ watch(() => props.sections, (newSections) => {
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--text-primary, #1f2937);
   word-wrap: break-word;
 }
 
 .section-item-content {
   margin: 0;
-  color: #666;
+  color: var(--text-secondary, #6b7280);
   font-size: 0.9rem;
   line-height: 1.5;
   word-wrap: break-word;

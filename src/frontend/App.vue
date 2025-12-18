@@ -289,12 +289,13 @@ function loadTestData() {
 
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f9f9f9;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --border-color: #e0e0e0;
-  --accent-color: #4CAF50;
-  --accent-hover: #45a049;
+  --bg-secondary: #f9fafb;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --accent-color: #9333EA;
+  --accent-hover: #7C3AED;
+  --accent-light: rgba(147, 51, 234, 0.1);
   /* 整體縮小 10% */
   font-size: 90%;
 }
@@ -352,13 +353,14 @@ body {
 }
 
 .confirm-dialog.dark {
-  --bg-primary: #1e1e1e;
-  --bg-secondary: #2d2d2d;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --border-color: #404040;
-  --accent-color: #66BB6A;
-  --accent-hover: #5cb660;
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --border-color: #374151;
+  --accent-color: #A855F7;
+  --accent-hover: #9333EA;
+  --accent-light: rgba(168, 85, 247, 0.15);
 }
 
 .dialog-header {
