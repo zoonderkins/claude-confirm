@@ -11,6 +11,7 @@ pub fn run_ui_app() {
             commands::submit_response,
             commands::cancel_response,
             commands::get_project_files,
+            commands::get_project_files_with_root,
             commands::get_cli_args,
             commands::read_mcp_request,
             commands::set_always_on_top,

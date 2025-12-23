@@ -17,6 +17,10 @@
         placeholder="輸入您的回覆... (輸入 @ 選擇文件或資料夾)"
         class="input-textarea"
         rows="4"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
       />
     </div>
 
@@ -33,6 +37,10 @@
             @keydown.up.prevent="moveSelection(-1)"
             placeholder="搜索文件或資料夾..."
             class="file-search"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
           />
           <span class="picker-hint">↑↓ 選擇 · Enter 確認 · Esc 取消</span>
         </div>
@@ -45,7 +53,10 @@
             @mouseenter="highlightedIndex = index"
           >
             <span class="file-icon">{{ file.is_directory ? '📁' : '📄' }}</span>
-            <span class="file-name">{{ file.name }}</span>
+            <div class="file-info">
+              <span class="file-name">{{ file.name }}</span>
+              <span class="file-path">{{ getRelativePath(file) }}</span>
+            </div>
             <span v-if="file.is_directory" class="file-type-badge">資料夾</span>
           </div>
           <div v-if="filteredFiles.length === 0" class="no-files">
@@ -88,6 +99,29 @@ const fileSearch = ref('')
 const availableFiles = ref([])
 const highlightedIndex = ref(0)
 const cursorPosition = ref(0)
+const projectRoot = ref('')
+
+// 取得檔案的相對路徑（不含檔名）
+function getRelativePath(file) {
+  if (!projectRoot.value || !file.path) return ''
+
+  // 移除專案根目錄前綴
+  let relativePath = file.path
+  if (relativePath.startsWith(projectRoot.value)) {
+    relativePath = relativePath.slice(projectRoot.value.length)
+    // 移除開頭的斜線
+    if (relativePath.startsWith('/')) {
+      relativePath = relativePath.slice(1)
+    }
+  }
+
+  // 取得目錄部分（不含檔名）
+  const lastSlash = relativePath.lastIndexOf('/')
+  if (lastSlash === -1) {
+    return './' // 根目錄
+  }
+  return './' + relativePath.slice(0, lastSlash + 1)
+}
 
 // 計算已選擇的文件數量
 const selectedFilesCount = computed(() => {
@@ -157,12 +191,15 @@ async function openFilePicker() {
   fileSearch.value = ''
   highlightedIndex.value = 0
 
-  // 獲取文件列表
+  // 獲取文件列表和專案根目錄
   try {
-    availableFiles.value = await invoke('get_project_files')
+    const result = await invoke('get_project_files_with_root')
+    availableFiles.value = result.files
+    projectRoot.value = result.root
   } catch (e) {
     console.error('獲取文件列表失敗:', e)
     availableFiles.value = []
+    projectRoot.value = ''
   }
 
   // 聚焦搜索框
@@ -184,7 +221,9 @@ function closeFilePicker() {
 }
 
 function selectFile(file) {
-  // 移除 @ 並插入文件名
+  // cursorPosition 是 @ 符號的位置
+  // beforeAt: @ 之前的內容（不含 @）
+  // afterAt: @ 之後的內容
   const beforeAt = input.value.slice(0, cursorPosition.value)
   const afterAt = input.value.slice(cursorPosition.value + 1)
 
@@ -192,7 +231,11 @@ function selectFile(file) {
   const displayName = file.is_directory ? `@${file.name}/` : `@${file.name}`
   input.value = `${beforeAt}${displayName} ${afterAt}`
 
-  closeFilePicker()
+  // 先關閉選擇器，但不要刪除 @（因為已經被替換了）
+  showFilePicker.value = false
+  fileSearch.value = ''
+  highlightedIndex.value = 0
+
   textareaRef.value?.focus()
 }
 
@@ -362,14 +405,14 @@ const filteredFiles = computed(() => {
 }
 
 .file-item {
-  padding: 0.6rem 0.75rem;
+  padding: 0.4rem 0.6rem;
   cursor: pointer;
   transition: background 0.15s ease;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   border-bottom: 1px solid var(--border-color, #f5f5f5);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   color: var(--text-primary, #333);
 }
 
@@ -378,11 +421,34 @@ const filteredFiles = computed(() => {
   font-size: 1rem;
 }
 
-.file-name {
+.file-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.file-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
+}
+
+.file-path {
+  font-size: 0.7rem;
+  color: var(--text-muted, #aaa);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  opacity: 0.8;
+}
+
+.file-path::before {
+  content: '📂 ';
+  font-size: 0.65rem;
 }
 
 .file-type-badge {

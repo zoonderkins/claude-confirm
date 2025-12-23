@@ -18,6 +18,12 @@ pub struct FileEntry {
     pub is_directory: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProjectFilesResult {
+    pub root: String,
+    pub files: Vec<FileEntry>,
+}
+
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
     tag_name: String,
@@ -93,6 +99,30 @@ pub async fn get_project_files() -> Result<Vec<FileEntry>, String> {
     });
 
     Ok(entries)
+}
+
+#[command]
+pub async fn get_project_files_with_root() -> Result<ProjectFilesResult, String> {
+    // 獲取當前工作目錄
+    let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
+    let root = current_dir.to_string_lossy().to_string();
+
+    // 掃描文件和資料夾
+    let mut entries = scan_directory(&current_dir, 3).map_err(|e| e.to_string())?;
+
+    // 排序：資料夾在前，然後按名稱排序
+    entries.sort_by(|a, b| {
+        match (a.is_directory, b.is_directory) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        }
+    });
+
+    Ok(ProjectFilesResult {
+        root,
+        files: entries,
+    })
 }
 
 fn scan_directory(dir: &Path, max_depth: usize) -> std::io::Result<Vec<FileEntry>> {
