@@ -3,19 +3,33 @@ import { jsPDF } from 'jspdf'
 import { invoke } from '@tauri-apps/api/core'
 
 /**
- * 將 DOM 元素轉換為 Canvas
+ * 將 DOM 元素轉換為 Canvas（包含完整可滾動內容）
  */
 async function captureElementAsCanvas(element, isDark) {
   const bgColor = isDark ? '#1f2937' : '#ffffff'
+
+  // 取得完整內容高度（包含滾動區域）
+  const fullHeight = element.scrollHeight
+  const fullWidth = element.scrollWidth
 
   return await html2canvas(element, {
     backgroundColor: bgColor,
     scale: 2,
     useCORS: true,
     logging: false,
+    height: fullHeight,
+    width: fullWidth,
+    windowHeight: fullHeight,
+    windowWidth: fullWidth,
+    scrollY: -window.scrollY,
+    scrollX: -window.scrollX,
     onclone: (clonedDoc, clonedElement) => {
+      // 移除 overflow 限制，展開完整內容
       clonedElement.style.backgroundColor = bgColor
       clonedElement.style.padding = '1rem'
+      clonedElement.style.overflow = 'visible'
+      clonedElement.style.height = 'auto'
+      clonedElement.style.maxHeight = 'none'
     }
   })
 }
@@ -50,22 +64,38 @@ export async function exportToPNG(element, isDark) {
 }
 
 /**
- * 匯出為 PDF
+ * 匯出為 PDF（支援多頁）
  */
 export async function exportToPDF(element, isDark) {
   const canvas = await captureElementAsCanvas(element, isDark)
 
-  const imgWidth = 210
+  const imgWidth = 210 // A4 寬度 mm
+  const pageHeight = 297 // A4 高度 mm
   const imgHeight = (canvas.height * imgWidth) / canvas.width
 
   const pdf = new jsPDF({
-    orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+    orientation: 'portrait',
     unit: 'mm',
     format: 'a4'
   })
 
   const imgData = canvas.toDataURL('image/png')
-  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, 297))
+
+  // 計算需要多少頁
+  let heightLeft = imgHeight
+  let position = 0
+
+  // 第一頁
+  pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+  heightLeft -= pageHeight
+
+  // 添加額外頁面
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight
+    pdf.addPage()
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+    heightLeft -= pageHeight
+  }
 
   const pdfOutput = pdf.output('datauristring')
   const base64Data = pdfOutput.split(',')[1]
