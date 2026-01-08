@@ -2,7 +2,7 @@
   "name": "claude-confirm",
   "type": "module",
   "version": "0.2.5",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
