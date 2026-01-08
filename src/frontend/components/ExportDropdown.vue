@@ -13,6 +13,10 @@
         <span class="item-icon">📄</span>
         <span>匯出 PDF</span>
       </button>
+      <button @click="handleExport('md')" :disabled="exporting" class="dropdown-item">
+        <span class="item-icon">📝</span>
+        <span>匯出 Markdown</span>
+      </button>
     </div>
 
     <Teleport to="body">
@@ -25,7 +29,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { exportToPNG, exportToPDF } from '../utils/export'
+import { exportToPNG, exportToPDF, exportToMarkdown } from '../utils/export'
 
 const props = defineProps({
   targetElement: {
@@ -35,6 +39,14 @@ const props = defineProps({
   isDark: {
     type: Boolean,
     default: false
+  },
+  markdownContent: {
+    type: String,
+    default: ''
+  },
+  sections: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -61,7 +73,9 @@ function showToast(message, type = 'success') {
 }
 
 async function handleExport(format) {
-  if (!props.targetElement || exporting.value) return
+  // Markdown 不需要 targetElement
+  if (format !== 'md' && !props.targetElement) return
+  if (exporting.value) return
 
   exporting.value = true
   isOpen.value = false
@@ -70,8 +84,10 @@ async function handleExport(format) {
     let filename
     if (format === 'png') {
       filename = await exportToPNG(props.targetElement, props.isDark)
-    } else {
+    } else if (format === 'pdf') {
       filename = await exportToPDF(props.targetElement, props.isDark)
+    } else if (format === 'md') {
+      filename = await exportToMarkdown(props.markdownContent, props.sections)
     }
     showToast(`已儲存至 ~/Downloads/${filename}`, 'success')
   } catch (e) {

@@ -26,6 +26,8 @@
           <ExportDropdown
             :targetElement="dialogBodyRef"
             :isDark="isDark"
+            :markdownContent="request.message"
+            :sections="request.sections"
           />
           <button @click="showAbout = true" class="icon-btn" title="關於">
             ℹ️

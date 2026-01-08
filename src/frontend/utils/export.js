@@ -110,3 +110,32 @@ export async function exportToPDF(element, isDark) {
 
   return filename
 }
+
+/**
+ * 匯出為 Markdown
+ */
+export async function exportToMarkdown(markdownContent, sections = []) {
+  // 組合完整的 markdown 內容
+  let fullContent = markdownContent
+
+  // 如果有 sections，附加到末尾
+  if (sections && sections.length > 0) {
+    fullContent += '\n\n---\n\n## Sections\n\n'
+    sections.forEach((section) => {
+      const status = section.selected ? '✅' : '⬜'
+      fullContent += `### ${status} ${section.title}\n\n${section.content}\n\n`
+    })
+  }
+
+  // 轉換為 base64
+  const base64Data = btoa(unescape(encodeURIComponent(fullContent)))
+  const filename = generateFilename('md')
+
+  await invoke('save_export_file', {
+    filename,
+    data: base64Data,
+    fileType: 'md'
+  })
+
+  return filename
+}
