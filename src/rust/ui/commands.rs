@@ -2,6 +2,7 @@ use tauri::{command, AppHandle, Manager};
 use crate::types::UserResponse;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
+use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VersionInfo {
@@ -297,4 +298,26 @@ pub async fn open_github_repo() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[command]
+pub async fn save_export_file(filename: String, data: String, file_type: String) -> Result<String, String> {
+    // 取得 Downloads 目錄
+    let downloads_dir = dirs::download_dir()
+        .ok_or("無法取得 Downloads 目錄")?;
+
+    let file_path = downloads_dir.join(&filename);
+
+    // 解碼 base64 資料
+    let decoded = general_purpose::STANDARD
+        .decode(&data)
+        .map_err(|e| format!("Base64 解碼失敗: {}", e))?;
+
+    // 寫入檔案
+    std::fs::write(&file_path, decoded)
+        .map_err(|e| format!("寫入檔案失敗: {}", e))?;
+
+    log::info!("匯出檔案至: {:?} (類型: {})", file_path, file_type);
+
+    Ok(file_path.to_string_lossy().to_string())
 }

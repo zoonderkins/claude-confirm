@@ -372,9 +372,10 @@ dependencies = [
 
 [[package]]
 name = "claude-confirm"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "chrono",
  "dirs 5.0.1",
  "env_logger",

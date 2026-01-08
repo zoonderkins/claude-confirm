@@ -18,6 +18,7 @@ pub fn run_ui_app() {
             commands::open_devtools,
             commands::check_latest_version,
             commands::open_github_repo,
+            commands::save_export_file,
         ])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();

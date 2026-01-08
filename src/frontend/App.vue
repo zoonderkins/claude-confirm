@@ -23,6 +23,10 @@
       <div class="dialog-header">
         <h2>Claude Confirm</h2>
         <div class="header-actions">
+          <ExportDropdown
+            :targetElement="dialogBodyRef"
+            :isDark="isDark"
+          />
           <button @click="showAbout = true" class="icon-btn" title="關於">
             ℹ️
           </button>
@@ -62,7 +66,7 @@
         </div>
       </div>
 
-      <div class="dialog-body">
+      <div class="dialog-body" ref="dialogBodyRef">
         <MarkdownViewer :content="request.message" />
 
         <SectionList
@@ -97,6 +101,7 @@ import MarkdownViewer from './components/MarkdownViewer.vue'
 import SectionList from './components/SectionList.vue'
 import UserInput from './components/UserInput.vue'
 import AboutDialog from './components/AboutDialog.vue'
+import ExportDropdown from './components/ExportDropdown.vue'
 
 const request = ref(null)
 const selectedSections = ref([])
@@ -107,6 +112,7 @@ const showSettings = ref(false)
 const isDark = ref(false)
 const isPinned = ref(true)
 const showAbout = ref(false)
+const dialogBodyRef = ref(null)
 
 // 載入儲存的設定
 function loadSettings() {
