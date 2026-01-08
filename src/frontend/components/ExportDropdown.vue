@@ -1,7 +1,7 @@
 <template>
   <div class="export-dropdown" ref="dropdownRef">
     <button @click="toggleDropdown" class="icon-btn" title="匯出">
-      📥
+      💾
     </button>
 
     <div v-if="isOpen" class="dropdown-menu">

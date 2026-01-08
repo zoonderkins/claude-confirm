@@ -123,6 +123,13 @@ Claude Code 會在以下情況自動調用 confirm 工具：
 - 響應式設計（RWD）
 - 縮小 10% 的緊湊界面
 
+### 匯出功能 (v0.2.3+)
+- 點擊 💾 按鈕開啟匯出選單
+- 支援匯出 PNG 圖片（高解析度 2x）
+- 支援匯出 PDF 文件（A4 格式，自動分頁）
+- 自動儲存至 `~/Downloads/claude-confirm-{日期}-{時間}.{格式}`
+- 完整擷取可滾動內容
+
 ### DevTools 支援
 - Release 版本支援 DevTools
 - 點擊 🔧 按鈕開啟
@@ -227,7 +234,12 @@ claude-confirm/
 │       ├── components/
 │       │   ├── MarkdownViewer.vue
 │       │   ├── SectionList.vue
-│       │   └── UserInput.vue
+│       │   ├── UserInput.vue
+│       │   ├── AboutDialog.vue
+│       │   └── ExportDropdown.vue  # 匯出功能
+│       ├── utils/
+│       │   ├── markdown.js
+│       │   └── export.js           # PNG/PDF 匯出
 │       ├── App.vue
 │       └── main.js
 ├── Cargo.toml
