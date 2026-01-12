@@ -47,6 +47,10 @@ const props = defineProps({
   sections: {
     type: Array,
     default: () => []
+  },
+  envContext: {
+    type: Object,
+    default: null
   }
 })
 
@@ -83,11 +87,11 @@ async function handleExport(format) {
   try {
     let filename
     if (format === 'png') {
-      filename = await exportToPNG(props.targetElement, props.isDark)
+      filename = await exportToPNG(props.targetElement, props.isDark, props.envContext)
     } else if (format === 'pdf') {
-      filename = await exportToPDF(props.targetElement, props.isDark)
+      filename = await exportToPDF(props.targetElement, props.isDark, props.envContext)
     } else if (format === 'md') {
-      filename = await exportToMarkdown(props.markdownContent, props.sections)
+      filename = await exportToMarkdown(props.markdownContent, props.sections, props.envContext)
     }
     showToast(`已儲存至 ~/Downloads/${filename}`, 'success')
   } catch (e) {

@@ -28,6 +28,7 @@
             :isDark="isDark"
             :markdownContent="request.message"
             :sections="request.sections"
+            :envContext="request.env_context"
           />
           <button @click="showAbout = true" class="icon-btn" title="關於">
             ℹ️
@@ -66,6 +67,22 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- 環境資訊列 -->
+      <div v-if="request.env_context" class="env-context-bar">
+        <span v-if="request.env_context.project_name" class="env-item" title="專案名稱">
+          📁 {{ request.env_context.project_name }}
+        </span>
+        <span v-if="request.env_context.cwd" class="env-item env-cwd" :title="request.env_context.cwd">
+          📂 {{ truncatePath(request.env_context.cwd) }}
+        </span>
+        <span v-if="request.env_context.terminal" class="env-item" title="終端機">
+          💻 {{ request.env_context.terminal }}
+        </span>
+        <span v-if="request.env_context.pid" class="env-item" title="進程 ID">
+          🔢 PID: {{ request.env_context.pid }}
+        </span>
       </div>
 
       <div class="dialog-body" ref="dialogBodyRef">
@@ -154,6 +171,16 @@ async function togglePin() {
 function setTheme(theme) {
   isDark.value = theme === 'dark'
   localStorage.setItem('theme', theme)
+}
+
+// 截斷過長的路徑
+function truncatePath(path, maxLength = 40) {
+  if (!path || path.length <= maxLength) return path
+  const parts = path.split('/')
+  if (parts.length <= 3) return path
+  // 顯示 ~/.../<last-two-dirs>
+  const lastTwo = parts.slice(-2).join('/')
+  return `~/.../${lastTwo}`
 }
 
 // 開啟 DevTools
@@ -460,6 +487,35 @@ body {
   border-color: var(--accent-color);
   background: var(--accent-color);
   color: white;
+}
+
+.env-context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.env-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.env-item.env-cwd {
+  cursor: help;
 }
 
 .dialog-body {

@@ -396,7 +396,7 @@ dependencies = [
 
 [[package]]
 name = "claude-confirm"
-version = "0.2.5"
+version = "0.2.7"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
