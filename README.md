@@ -34,7 +34,7 @@ Tauri UI (Vue + Rust)
 **技術棧**：
 - **後端**: Rust + MCP Protocol
 - **前端**: Vue 3 + Vite + Markdown-it
-- **GUI 框架**: Tauri 2.0
+- **GUI 框架**: Tauri 2.10
 - **樣式**: CSS Variables (支援深色模式)
 
 ## 🚀 編譯和安裝
@@ -63,16 +63,55 @@ cargo build --release --bin claude-confirm
 - MCP Server: `target/release/claude-confirm`
 - GUI 應用: `target/release/claude-confirm-ui`
 - macOS App: `target/release/bundle/macos/claude-confirm.app`
-- DMG: `target/release/bundle/dmg/claude-confirm_0.1.0_aarch64.dmg`
+- DMG: `target/release/bundle/dmg/claude-confirm_0.2.8_aarch64.dmg`
 
-### 安裝到 Claude Code
+### 安裝（macOS）
+
+⚠️ **重要**：Tauri 2.10+ 的 WebView 需要 `.app` bundle 才能正常啟動，裸 binary 會被 macOS SIGKILL。
 
 ```bash
-# 註冊 MCP server
-claude mcp add confirm --scope local /path/to/target/release/claude-confirm
+# 1. 安裝 .app bundle 到 /Applications（UI 程序需要 .app 的 Info.plist）
+cp -R target/release/bundle/macos/claude-confirm.app /Applications/
+
+# 2. 安裝 MCP server 到 PATH（MCP server 是 headless，不需要 .app）
+cp target/release/claude-confirm /usr/local/bin/
+
+# 3. 清除 macOS quarantine（如有需要）
+xattr -cr /Applications/claude-confirm.app /usr/local/bin/claude-confirm
+```
+
+MCP server 啟動時會自動搜尋 UI 程序，搜尋順序：
+1. `/Applications/claude-confirm.app/Contents/MacOS/claude-confirm-ui`
+2. `~/Applications/claude-confirm.app/Contents/MacOS/claude-confirm-ui`
+3. 同目錄的 `bundle/macos/claude-confirm.app/Contents/MacOS/claude-confirm-ui`
+4. 同目錄的 `claude-confirm-ui`（裸 binary fallback）
+5. 系統 PATH 中的 `claude-confirm-ui`
+
+### 註冊到 Claude Code
+
+```bash
+# 方法 1: 使用 PATH 中的 binary（推薦）
+claude mcp add confirm -- claude-confirm
+
+# 方法 2: 使用絕對路徑
+claude mcp add confirm -- /usr/local/bin/claude-confirm
 
 # 驗證安裝
 claude mcp list
+```
+
+### 從 DMG 安裝
+
+```bash
+# 掛載 DMG
+open target/release/bundle/dmg/claude-confirm_0.2.8_aarch64.dmg
+
+# 將 claude-confirm.app 拖入 /Applications
+# 然後複製 MCP server binary
+cp /Applications/claude-confirm.app/Contents/MacOS/claude-confirm /usr/local/bin/
+
+# 註冊 MCP server
+claude mcp add confirm -- claude-confirm
 ```
 
 ## 📖 使用方法
@@ -127,8 +166,15 @@ Claude Code 會在以下情況自動調用 confirm 工具：
 - 點擊 💾 按鈕開啟匯出選單
 - 支援匯出 PNG 圖片（高解析度 2x）
 - 支援匯出 PDF 文件（A4 格式，自動分頁）
-- 自動儲存至 `~/Downloads/claude-confirm-{日期}-{時間}.{格式}`
+- 支援匯出 Markdown 文件（含 sections 狀態）
+- 自動儲存至 `~/Downloads/claude-confirm-{專案名}-{日期}-{時間}.{格式}`
 - 完整擷取可滾動內容
+- 支援 base64 內嵌圖片
+
+### 一鍵匯出全部 (v0.2.8+)
+- 📦 一次點擊同時匯出 PNG + PDF + Markdown 三種格式
+- Canvas 只截取一次，PNG/PDF 共用，效能最佳化
+- 並行匯出，快速完成
 
 ### DevTools 支援
 - Release 版本支援 DevTools
@@ -156,7 +202,7 @@ pnpm tauri:build
 
 # 產出位置：
 # - macOS App: target/release/bundle/macos/claude-confirm.app
-# - DMG: target/release/bundle/dmg/claude-confirm_0.2.0_aarch64.dmg
+# - DMG: target/release/bundle/dmg/claude-confirm_0.2.8_aarch64.dmg
 # - Binary: target/release/claude-confirm-ui
 ```
 
@@ -239,7 +285,7 @@ claude-confirm/
 │       │   └── ExportDropdown.vue  # 匯出功能
 │       ├── utils/
 │       │   ├── markdown.js
-│       │   └── export.js           # PNG/PDF 匯出
+│       │   └── export.js           # PNG/PDF/MD/全部匯出
 │       ├── App.vue
 │       └── main.js
 ├── Cargo.toml

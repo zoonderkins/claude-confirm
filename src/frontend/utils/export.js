@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core'
 
 /**
  * 將 DOM 元素轉換為 Canvas（包含完整可滾動內容）
+ * 支援 base64 圖片自動渲染
  */
 async function captureElementAsCanvas(element, isDark) {
   const bgColor = isDark ? '#1f2937' : '#ffffff'
@@ -16,6 +17,7 @@ async function captureElementAsCanvas(element, isDark) {
     backgroundColor: bgColor,
     scale: 2,
     useCORS: true,
+    allowTaint: true,
     logging: false,
     height: fullHeight,
     width: fullWidth,
@@ -149,7 +151,7 @@ export async function exportToPDF(element, isDark, envContext = null) {
 }
 
 /**
- * 匯出為 Markdown
+ * 匯出為 Markdown（支援 base64 圖片內嵌）
  * @param {string} markdownContent - Markdown 內容
  * @param {Array} sections - 段落列表
  * @param {Object} envContext - 環境上下文
@@ -167,7 +169,7 @@ export async function exportToMarkdown(markdownContent, sections = [], envContex
     })
   }
 
-  // 轉換為 base64
+  // 轉換為 base64（保留 markdown 中的 base64 圖片語法）
   const base64Data = btoa(unescape(encodeURIComponent(fullContent)))
   const filename = generateFilename('md', envContext)
 
@@ -178,4 +180,57 @@ export async function exportToMarkdown(markdownContent, sections = [], envContex
   })
 
   return filename
+}
+
+/**
+ * 一鍵匯出全部格式（PNG + PDF + Markdown）
+ * Canvas 只截取一次，三種格式並行產出
+ * @param {HTMLElement} element - 要截圖的元素
+ * @param {boolean} isDark - 是否深色模式
+ * @param {string} markdownContent - Markdown 原始內容
+ * @param {Array} sections - 段落列表
+ * @param {Object} envContext - 環境上下文
+ * @returns {Promise<string[]>} 匯出的檔名列表
+ */
+export async function exportAll(element, isDark, markdownContent, sections = [], envContext = null) {
+  // 只截取一次 canvas，PNG 和 PDF 共用
+  const canvas = await captureElementAsCanvas(element, isDark)
+
+  const [pngFilename, pdfFilename, mdFilename] = await Promise.all([
+    // PNG
+    (async () => {
+      const dataUrl = canvas.toDataURL('image/png')
+      const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '')
+      const filename = generateFilename('png', envContext)
+      await invoke('save_export_file', { filename, data: base64Data, fileType: 'png' })
+      return filename
+    })(),
+    // PDF
+    (async () => {
+      const imgWidth = 210
+      const pageHeight = 297
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const imgData = canvas.toDataURL('image/png')
+      let heightLeft = imgHeight
+      let position = 0
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+      const pdfOutput = pdf.output('datauristring')
+      const base64Data = pdfOutput.split(',')[1]
+      const filename = generateFilename('pdf', envContext)
+      await invoke('save_export_file', { filename, data: base64Data, fileType: 'pdf' })
+      return filename
+    })(),
+    // Markdown
+    exportToMarkdown(markdownContent, sections, envContext)
+  ])
+
+  return [pngFilename, pdfFilename, mdFilename]
 }

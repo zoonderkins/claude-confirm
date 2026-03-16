@@ -5,6 +5,11 @@
     </button>
 
     <div v-if="isOpen" class="dropdown-menu">
+      <button @click="handleExportAll" :disabled="exporting" class="dropdown-item export-all-item">
+        <span class="item-icon">📦</span>
+        <span>一鍵匯出全部</span>
+      </button>
+      <div class="dropdown-divider"></div>
       <button @click="handleExport('png')" :disabled="exporting" class="dropdown-item">
         <span class="item-icon">🖼️</span>
         <span>匯出 PNG</span>
@@ -29,7 +34,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { exportToPNG, exportToPDF, exportToMarkdown } from '../utils/export'
+import { exportToPNG, exportToPDF, exportToMarkdown, exportAll } from '../utils/export'
 
 const props = defineProps({
   targetElement: {
@@ -102,6 +107,30 @@ async function handleExport(format) {
   }
 }
 
+async function handleExportAll() {
+  if (!props.targetElement) return
+  if (exporting.value) return
+
+  exporting.value = true
+  isOpen.value = false
+
+  try {
+    const filenames = await exportAll(
+      props.targetElement,
+      props.isDark,
+      props.markdownContent,
+      props.sections,
+      props.envContext
+    )
+    showToast(`已匯出 ${filenames.length} 個檔案至 ~/Downloads/`, 'success')
+  } catch (e) {
+    console.error('一鍵匯出失敗:', e)
+    showToast(`匯出失敗: ${e}`, 'error')
+  } finally {
+    exporting.value = false
+  }
+}
+
 onMounted(() => {
   document.addEventListener('click', closeDropdown)
 })
@@ -151,6 +180,17 @@ onUnmounted(() => {
 .dropdown-item:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.export-all-item {
+  font-weight: 600;
+  color: var(--accent-color, #9333EA);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color, #e5e7eb);
+  margin: 0.25rem 0;
 }
 
 .item-icon {
